@@ -70,8 +70,11 @@ int main(int argc, char *argv[])
 	else { // Otherwise just go forwards
 		turnrate = 0;   
 		speed=0.5;
-		//if(xPos >/**Some number**/ || yPos >/**some number**/){//too far from origin
-		//}
+		if(xPos > 11 || yPos >11){ //too far from origin we need to turn back.
+			turnrate=dtor(10); //turn and go forward
+		}else if(xPos < -1 || yPos <-){ //off course need to adjust.
+		
+		}
 	}     
 
     // What did we decide to do?
