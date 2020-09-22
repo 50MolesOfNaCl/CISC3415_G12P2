@@ -67,18 +67,23 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	else { // Otherwise just go forwards
-		turnrate = 0;   
-		speed=0.5;
+	else { //Bumpers are clear
+		//Should be fine since origin remains the same
+		//screwed if not, would have to modify.
 		if(xPos > 11 || yPos >11){ //too far from origin we need to turn back.
-			turnrate=dtor(10); //turn and go forward
+			turnrate=dtor(10);//turn left
+			//code to go forward or else we turn in circles forever
 		}else if(xPos < -1 || yPos <-){ //off course need to adjust.
-		
+			turnrate=dtor(-10);//turn right
+			//code to go forward or else we turn forever
+		} else {
+			turnrate=0;
+			speed=0.5;//good to go, keep going forward!
 		}
-	}     
+	}
 
     // What did we decide to do?
-    std::cout << "Speed: " << speed << std::endl;      
+    std::cout << "Speed: " << speed << std::endl;
     std::cout << "Turn rate: " << turnrate << std::endl << std::endl;
 
     // Send the motion commands that we decided on to the robot.
