@@ -1,6 +1,70 @@
+/*
+ * bumper.cc
+ *
+ * Group 12: Jennie Kang, Edmund Lam, Jamila Toaha
+ *
+ * Project 2: Using bumper proxy and handling odometry information.
+ *
+ *
+ *
+ * Date: 9/27/2020
+ *
+ * Original Documentation: 
+ *  Sample code for a robot that has two front bumpers and uses them to
+ *  avoid obstacles. Suitable for use with the Roomba and Create. 
+ * 
+ *  Works IRL. Doesn't work so well in Stage, probably because of the
+ *  crude modeling of the bumpers, and can get stuck in convex shapes
+ *  when it backs into an object while trying to turn away from it.
+ *
+ *  Based on an example provided by Monica Anderson and Jeff Forbes,
+ *  via Carlos Jaramillo, and changed to (hopefully) make it easier to
+ *  understand.
+ *
+ *  Modified:    Simon Parsons
+ *  Date:        15th June 2009
+ *  Last change: 19th September 2011
+
+	
+ */
+
+
 #include <iostream>
 #include <cstdlib>
 #include <libplayerc++/playerc++.h>
+#include <queue>
+using namespace std;
+
+//creating values for x and y values for isStuck function
+double xTri [3] = {};
+double yTri [3] = {};
+
+
+//Function determines if robot is stuck. Utilizes a queue data structure 
+//Array structure for xTri: {xPreviousPrevious, xPrevious, xCurrent}
+//Array structure for yTri: {yPreviousPrevious, yPrevious, yCurrent}
+//Goal: to compare x and y values from 3 consecutive cycles
+int isStuckCount = 0 ; // this is to give some time for program to register if robot is stuck
+bool isStuck(double xCurrent, double yCurrent){
+	xTri[0] = xTri[1];
+	xTri[1] = xTri[2];
+	xTri[2] = xCurrent;
+
+	yTri[0] = yTri[1];
+	yTri[1] = yTri[2];
+	yTri[2] = yCurrent;
+
+    std::cout << "isStuckCount: " << isStuckCount  << std::endl;
+
+	if( xTri[0] == xTri [1] && xTri[1] == xTri[2] &&
+	    yTri[0] == yTri [1] && yTri[1] == yTri[2] && isStuckCount++ > 3)
+		return true;
+	else
+		return false;
+	
+}
+
+
 
 int main(int argc, char *argv[])
 {  
@@ -16,10 +80,10 @@ int main(int argc, char *argv[])
   // Allow the program to take charge of the motors (take care now)
   pp.SetMotorEnable(true);
   
-  double xPos;
-  double yPos;
-  double yaw;
+  double xPos, yPos, yaw;
   
+
+
   // Control loop
   while(true){    
 	double turnrate, speed;
@@ -30,11 +94,15 @@ int main(int argc, char *argv[])
 	yPos = pp.GetYPos();
 	yaw = pp.GetYaw();
 	
+	bool stuckResult = isStuck(xPos, yPos); 
+	
+	
 	// What does odometry tell us? In other words, how far do we
     // think we have gone?
     std::cout << "x: " << xPos  << std::endl;
     std::cout << "y: " << yPos  << std::endl;
     std::cout << "a: " << yaw  << std::endl;
+    std::cout << "isStuck? " << stuckResult  << std::endl;
 
 
     // Print out what the bumpers tell us:
@@ -97,9 +165,13 @@ int main(int argc, char *argv[])
     // What did we decide to do?
     std::cout << "Speed: " << speed << std::endl;
     std::cout << "Turn rate: " << turnrate << std::endl << std::endl;
+    std::cout << "xTri " << xTri[0] << xTri[1] << xTri[2] << std::endl << std::endl;
+    std::cout << "yTri " << yTri[0] << yTri[1] << yTri[2] << std::endl << std::endl;
 
     // Send the motion commands that we decided on to the robot.
     pp.SetSpeed(speed, turnrate);  
     }//EOL
   
 }
+
+
