@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
 		}
 	}
 	else { //Bumpers are clear
-		if((xPos < 11 && yPos < -1) && yaw > (dtor(90) || yaw > 0) ){ //Out of bound South!
+		if((xPos < 11 && yPos < -1) && ((yaw < 0 ) || yaw < dtor(45)) ){ //Out of bound South!
 			std::cout <<"Out of bound South!"<< std::endl;
-			turnrate=dtor(10);
+			turnrate=dtor(-10);
 			speed=0;
 			//code to go forward or else we turn in circles forever
 		}else if((xPos > 11 && yPos < 11) && (yaw < dtor(110))){ //Out of bound East!
