@@ -84,9 +84,9 @@ int main(int argc, char *argv[])
 			turnrate=dtor(10);
 			speed=0;
 		//Does not work yet
-		} else if((xPos < 0 && yPos > -1) && (yaw > 0 && yaw >dtor(-90) && yaw < dtor(-110)) ){ //Out of bound West!
+		} else if((xPos < 0 && yPos > -1) && (yaw > 0 || yaw < dtor(-90)) ){ //Out of bound West!
 			std::cout <<"Out of bound West! Adjusting yaw to something between 0 and -90 azimuth"<< std::endl;
-			turnrate=dtor(10);
+			turnrate=dtor(-10);
 			speed=0;
 		} else {
 			turnrate=0;
