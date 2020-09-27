@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	else { //Bumpers are clear
-		if((xPos < 11 && yPos < -1) && yaw > (dtor(90) || yaw > 0) ){ //Out of bound South!
+		//For some reason this ignores 3.1415 and will go left if you turn that way. temp fix by turning right
+		if((xPos < 11 && yPos < -1) && ((yaw < 0 ) || yaw < dtor(45)) ){ //Out of bound South!
 			std::cout <<"Out of bound South!"<< std::endl;
 			turnrate=dtor(10);
 			speed=0;
@@ -83,8 +84,7 @@ int main(int argc, char *argv[])
 			std::cout <<"Out of bound North! Adjusting yaw to something between 180 and 260 azimuth"<< std::endl;
 			turnrate=dtor(10);
 			speed=0;
-		//Does not work yet
-		} else if((xPos < 0 && yPos > -1) && (yaw > 0 && yaw >dtor(-90) && yaw < dtor(-110)) ){ //Out of bound West!
+		} else if((xPos < 0 && yPos > -1) && (yaw > 0 || yaw < dtor(-90)) ){ //Out of bound West!
 			std::cout <<"Out of bound West! Adjusting yaw to something between 0 and -90 azimuth"<< std::endl;
 			turnrate=dtor(10);
 			speed=0;
