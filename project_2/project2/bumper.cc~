@@ -62,7 +62,7 @@ bool isStuck(double xCurrent, double yCurrent, double yawCurrent){
   // If the values from the last 3 cycles are the same across the x States, the y States, and the yaw States for more than one second
   if( xState[0] == xState [1] && xState[1] == xState[2] &&
       yState[0] == yState [1] && yState[1] == yState[2] &&
-      yawState[0] == yawState[1] && yawState[1] == yawState[2] && isStuckCount++ > 1 )
+      yawState[0] == yawState[1] && yawState[1] == yawState[2])
 	return true;
  
   isStuckCount = 0;
@@ -102,6 +102,7 @@ int main(int argc, char *argv[])
 	
 	bool stuckResult = isStuck(xPos, yPos, yaw); 
 	
+	//Checks if robot iss stuck. If it is stuck will adjust turnrate and/or speed in random fashion so robot can become unstuck
 	if(stuckResult) {
 
 		//The is to allow the random turn rate and speed to stay consistent for a few cycles 
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
 			std::cout <<"Out of bound North! Adjusting yaw to something between 180 and 260 azimuth"<< std::endl;
 			turnrate=dtor(10);
 			speed=0;
-		} else if((xPos < 0 && yPos > -1) && (yaw > 0 || yaw < dtor(-90)) ){ //Out of bound West!
+		} else if((xPos < -1 && yPos > -1) && (yaw > 0 || yaw < dtor(-90)) ){ //Out of bound West!
 			std::cout <<"Out of bound West! Adjusting yaw to something between 0 and -90 azimuth"<< std::endl;
 			turnrate=dtor(10);
 			speed=0;
