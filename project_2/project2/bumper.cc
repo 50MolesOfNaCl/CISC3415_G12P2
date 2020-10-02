@@ -3,9 +3,10 @@
  *
  * Group 12: Jennie Kang, Edmund Lam, Jamila Toaha
  *
- * Project 2: Using bumper proxy and handling odometry information.
- *
- *
+ * Project 2 - World 2: Uses bumper proxy and odometry information to make circuit around obstacle.
+ *  - Uses odemetry to create a tighter bounding box that robot travels around
+ *  - Uses bumper proxy to adjust robot's direction
+ *  - Checks state in the isStuck function and gets the robot out of situations where it becomes stuck.
  *
  * Date: 9/27/2020
  *
@@ -24,44 +25,48 @@
  *  Modified:    Simon Parsons
  *  Date:        15th June 2009
  *  Last change: 19th September 2011
-
-	
  */
 
 
 #include <iostream>
 #include <cstdlib>
 #include <libplayerc++/playerc++.h>
-#include <queue>
+#include <math.h>
+
 using namespace std;
 
-//creating values for x and y values for isStuck function
-double xTri [3] = {};
-double yTri [3] = {};
+// Creates values for x and y values for isStuck function
+double xState [3] = {};			// xState: {xPreviousPrevious, xPrevious, xCurrent}
+double yState [3] = {};			// yState: {yPreviousPrevious, yPrevious, yCurrent}
+double yawState [3] = {}; 		// yawState: {yawPreviousPrevious, yawPrevious, yawCurrent}
+int isStuckCount = 0;	 		// Give time for program to register if robot is stuck
 
+// Function determines if robot is stuck by comparing the last 3 states the robot is in
+// Goal: to compare x, y, and yaw values from 3 consecutive cycles
+bool isStuck(double xCurrent, double yCurrent, double yawCurrent){
 
-//Function determines if robot is stuck. Utilizes a queue data structure 
-//Array structure for xTri: {xPreviousPrevious, xPrevious, xCurrent}
-//Array structure for yTri: {yPreviousPrevious, yPrevious, yCurrent}
-//Goal: to compare x and y values from 3 consecutive cycles
-int isStuckCount = 0 ; // this is to give some time for program to register if robot is stuck
-bool isStuck(double xCurrent, double yCurrent){
-	xTri[0] = xTri[1];
-	xTri[1] = xTri[2];
-	xTri[2] = xCurrent;
+  // The follow updates State arrays, to contain the 3 most recent x and y coordinates and yaw orientations
 
-	yTri[0] = yTri[1];
-	yTri[1] = yTri[2];
-	yTri[2] = yCurrent;
+  xState[0] = xState[1];
+  xState[1] = xState[2];
+  xState[2] = xCurrent;
 
-    std::cout << "isStuckCount: " << isStuckCount  << std::endl;
+  yState[0] = yState[1];
+  yState[1] = yState[2];
+  yState[2] = yCurrent;
 
-	if( xTri[0] == xTri [1] && xTri[1] == xTri[2] &&
-	    yTri[0] == yTri [1] && yTri[1] == yTri[2] && isStuckCount++ > 3)
-		return true;
-	else
-		return false;
-	
+  yawState[0] = yawState[1];
+  yawState[1] = yawState[2];
+  yawState[2] = yawCurrent;
+
+  // If the values from the last 3 cycles are the same across the x States, the y States, and the yaw States for more than one second
+  if( xState[0] == xState [1] && xState[1] == xState[2] &&
+      yState[0] == yState [1] && yState[1] == yState[2] &&
+      yawState[0] == yawState[1] && yawState[1] == yawState[2] && isStuckCount++ > 1 )
+	return true;
+ 
+  isStuckCount = 0;
+	return false;
 }
 
 
@@ -81,8 +86,9 @@ int main(int argc, char *argv[])
   pp.SetMotorEnable(true);
   
   double xPos, yPos, yaw;
-  
-
+  double timer = 0;
+  int randomTurnRate; 			//This is just a placeholder for random variable btw 0 and 1
+  int randomSpeed;                      //This is just a placeholder for random variable btw 0 and 1	
 
   // Control loop
   while(true){    
@@ -94,22 +100,37 @@ int main(int argc, char *argv[])
 	yPos = pp.GetYPos();
 	yaw = pp.GetYaw();
 	
-	bool stuckResult = isStuck(xPos, yPos); 
+	bool stuckResult = isStuck(xPos, yPos, yaw); 
 	
-	
-	// What does odometry tell us? In other words, how far do we
-    // think we have gone?
-    std::cout << "x: " << xPos  << std::endl;
-    std::cout << "y: " << yPos  << std::endl;
-    std::cout << "a: " << yaw  << std::endl;
-    std::cout << "isStuck? " << stuckResult  << std::endl;
+	if(stuckResult) {
+
+		//The is to allow the random turn rate and speed to stay consistent for a few cycles 
+		//so that robot can make a consistent move/ progress in that direction
+		if(timer == 0) {
+		  randomTurnRate = rand () % 60 - 30; 		// Choose a turnrate btw 30 and -30 degrees
 
 
-    // Print out what the bumpers tell us:
-    std::cout << "Left  bumper: " << bp[0] << std::endl;
-    std::cout << "Right bumper: " << bp[1] << std::endl;
-    speed = 0;//reset to avoid breaking stuff
-    // If either bumper is pressed
+		  randomSpeed = rand() % 2;			// random variable to choose between 2 speeds
+		  //Adjust speed every 1 second that the robot is stuck
+		  speed = randomSpeed == 0 ? -.5 : .5; 		// Go forwards or backwords
+		}
+		
+    		std::cout << "isStuck speed" << speed  << std::endl;
+   		std::cout << "isStuck yaw" << yaw  << std::endl;
+  		
+		//adjust turn rate every cycle it's stuck
+                turnrate =  dtor(randomTurnRate);
+		
+		//Give robot 1 second to move in random direction (forward or backwards) and/or random degree
+		if (timer > 10) 
+			timer = 0;
+		else {
+			timer++;
+		}
+		
+	}
+	else
+        // If either bumper is pressed
 	if(bp[0] || bp[1]){
 		speed=-0.5; //Go backwards
 
@@ -162,15 +183,28 @@ int main(int argc, char *argv[])
 		}
 	}
 
+    // What does odometry tell us? In other words, how far do we
+    // think we have gone?
+    std::cout << "x: " << xPos  << std::endl;
+    std::cout << "y: " << yPos  << std::endl;
+    std::cout << "a: " << yaw  << std::endl;
+    std::cout << "isStuck? " << stuckResult  << std::endl;
+
+    // Print out what the bumpers tell us:
+    std::cout << "Left  bumper: " << bp[0] << std::endl;
+    std::cout << "Right bumper: " << bp[1] << std::endl;
+    //speed = 0;//reset to avoid breaking stuff
+
     // What did we decide to do?
     std::cout << "Speed: " << speed << std::endl;
     std::cout << "Turn rate: " << turnrate << std::endl << std::endl;
-    std::cout << "xTri " << xTri[0] << xTri[1] << xTri[2] << std::endl << std::endl;
-    std::cout << "yTri " << yTri[0] << yTri[1] << yTri[2] << std::endl << std::endl;
+    std::cout << "xState " << xState[0] << ", " << xState[1] << ", " << xState[2] << std::endl << std::endl;
+    std::cout << "yState " << yState[0] << ", " << yState[1] << ", " << yState[2] << std::endl << std::endl;
+    std::cout << "yawState " << yawState[0] << ", "<< yawState[1] << ", " << yawState[2] << std::endl << std::endl;
 
     // Send the motion commands that we decided on to the robot.
     pp.SetSpeed(speed, turnrate);  
-    }//EOL
+    } // EOL
   
 }
 
