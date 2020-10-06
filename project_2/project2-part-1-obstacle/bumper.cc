@@ -3,12 +3,14 @@
  *
  * Group 12: Jennie Kang, Edmund Lam, Jamila Toaha
  *
- * Project 2 - World 2: Uses bumper proxy and odometry information to make circuit around obstacle.
+ * Project 2 - Part 1 - World Wall Obstacle
+ *  Uses bumper proxy and odometry information to make circuit around obstacle.
  *  - Uses odemetry to create a tighter bounding box that robot travels around
  *  - Uses bumper proxy to adjust robot's direction
- *  - Checks state in the isStuck function and gets the robot out of situations where it becomes stuck.
+ *  - Checks state in the isStuck function and gets the robot out of situations where it becomes stuck
+ *    by turning and/ or moving in different directions until it becomes unstuck.
  *
- * Date: 9/27/2020
+ * Date: 10/6/2020
  *
  * Original Documentation: 
  *  Sample code for a robot that has two front bumpers and uses them to
@@ -39,7 +41,7 @@ using namespace std;
 double xState [3] = {};			// xState: {xPreviousPrevious, xPrevious, xCurrent}
 double yState [3] = {};			// yState: {yPreviousPrevious, yPrevious, yCurrent}
 double yawState [3] = {}; 		// yawState: {yawPreviousPrevious, yawPrevious, yawCurrent}
-int isStuckCount = 0;	 		// Give time for program to register if robot is stuck
+//int isStuckCount = 0;	 		// Give time for program to register if robot is stuck
 
 // Function determines if robot is stuck by comparing the last 3 states the robot is in
 // Goal: to compare x, y, and yaw values from 3 consecutive cycles
@@ -65,7 +67,6 @@ bool isStuck(double xCurrent, double yCurrent, double yawCurrent){
       yawState[0] == yawState[1] && yawState[1] == yawState[2])
 	return true;
  
-  isStuckCount = 0;
 	return false;
 }
 
@@ -87,9 +88,10 @@ int main(int argc, char *argv[])
   
   double xPos, yPos, yaw;
   double timer = 0;
-  int randomTurnRate; 			//This is just a placeholder for random variable btw 0 and 1
-  int randomSpeed;                      //This is just a placeholder for random variable btw 0 and 1	
+  int randomTurnRate;			//Provided to help robot get unstuck			
+  int randomSpeed;                      //Provided to help robot get unstuck	
 
+  int distanceTracker = 0; 			//Added to make robot stop
   // Control loop
   while(true){    
 	double turnrate, speed;
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
 	
 	bool stuckResult = isStuck(xPos, yPos, yaw); 
 	
-	//Checks if robot iss stuck. If it is stuck will adjust turnrate and/or speed in random fashion so robot can become unstuck
+	//Checks if robot is stuck. If it is stuck will adjust turnrate and/or speed in random fashion so robot can become unstuck
 	if(stuckResult) {
 
 		//The is to allow the random turn rate and speed to stay consistent for a few cycles 
@@ -128,7 +130,6 @@ int main(int argc, char *argv[])
 		else {
 			timer++;
 		}
-		
 	}
 	else
         // If either bumper is pressed
@@ -159,6 +160,14 @@ int main(int argc, char *argv[])
 	}
 	else { //Bumpers are clear
 		//For some reason this ignores 3.1415 and will go left if you turn that way. temp fix by turning right
+
+		//If the robot travels a great distance and we see the x and y coordinates 
+		//are less than the original starting coordinates, than it has made a full circuit
+		if (distanceTracker > 400 && (xPos < 0 && yPos < 0)){
+			std::cout <<"Robot has made a full circuit. Stop."<< std::endl;
+			break;
+		}
+
 		if((xPos < 11 && yPos < -1) && ((yaw < 0 ) || yaw < dtor(45)) ){ //Out of bound South!
 			std::cout <<"Out of bound South!"<< std::endl;
 			turnrate=dtor(10);
@@ -181,6 +190,9 @@ int main(int argc, char *argv[])
 		} else {
 			turnrate=0;
 			speed=0.5;//good to go, keep going forward!
+
+			distanceTracker++; 
+			std::cout <<"Distance (not in any particular units):" << distanceTracker << std::endl;
 		}
 	}
 
